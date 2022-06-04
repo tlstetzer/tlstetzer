@@ -11,6 +11,7 @@
 	
 	<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
 	<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.min.js"></script>
+	<script src="https://code.createjs.com/1.0.0/createjs.min.js"></script>
 	<script src="js/MineGame.js"></script> 
 	<script src="js/Piece.js"></script> 
 
@@ -59,7 +60,7 @@
 				</div>
 				<h4>Select Tool</h4>
 				<button id="btnPickaxe" type="button" class="btn btn-outline-primary btnWidth">
-					<img src="images/Pickaxe.png" alt="Pickaxe" width="32" height="32"> Pickaxe (free)
+					<img src="images/Pickaxe.png" alt="Pickaxe" width="32" height="32"> Pickaxe ($5)
 				</button>
 				<button id="btnJackhammer" type="button" class="btn btn-outline-primary btnWidth">
 					<img src="images/Jackhammer.png" alt="Jackhammer" width="32" height="32"> Jackhammer ($200)
@@ -77,6 +78,20 @@
 				<button id="btnDown" class="btn btn-outline-primary btnKey"><i class="bi bi-arrow-down btnKey"></i></button>
 			</div>
 		</div>
+	</div>
+	
+	<div class="container">
+		<input id="seed" type="text">
+		<br>
+		<div id="result"></div>
+		<script>
+			$('#seed').on('change', function() { 
+				var seed = $('#seed').val();
+				var rnd = Math.floor(Math.random() * seed) + 1;
+				$('#result').html(parseInt(rnd));
+				$('#seed').val('');
+			});
+		</script>
 	</div>
 </body>
 </html>
