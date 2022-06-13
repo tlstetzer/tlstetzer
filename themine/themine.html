@@ -16,7 +16,7 @@
 <script src="https://code.createjs.com/1.0.0/createjs.min.js"></script>
 <script src="themine.js"></script>
 <script>
-var canvas, stage, exportRoot, anim_container, dom_overlay_container, fnStartAnimation;
+var canvas, stage, exportRoot, anim_container, dom_overlay_container, fnStartAnimation, symbolLib;
 function init() {
 	canvas = document.getElementById("canvas");
 	anim_container = document.getElementById("animation_container");
@@ -42,9 +42,9 @@ function handleComplete(evt,comp) {
 	for(i=0; i<ssMetadata.length; i++) {
 		ss[ssMetadata[i].name] = new createjs.SpriteSheet( {"images": [queue.getResult(ssMetadata[i].name)], "frames": ssMetadata[i].frames} )
 	}
-	exportRoot = new lib.gameBoard_12e();
-	stage = new lib.Stage(canvas);
-	stage.enableMouseOver();	
+	symbolLib = lib;
+	exportRoot = new lib.gameBoard_13b();
+	stage = new lib.Stage(canvas);	
 	//Registers the "tick" event listener.
 	fnStartAnimation = function() {
 		stage.addChild(exportRoot);
@@ -60,9 +60,9 @@ function handleComplete(evt,comp) {
 <!-- write your code here -->
 </head>
 <body onload="init();" style="margin:0px;">
-	<div id="animation_container" style="background-color:rgba(255, 255, 255, 1.00); width:1024px; height:768px">
-		<canvas id="canvas" width="1024" height="768" style="position: absolute; display: block; background-color:rgba(255, 255, 255, 1.00);"></canvas>
-		<div id="dom_overlay_container" style="pointer-events:none; overflow:hidden; width:1024px; height:768px; position: absolute; left: 0px; top: 0px; display: block;">
+	<div id="animation_container" style="background-color:rgba(255, 255, 255, 1.00); width:1024px; height:1024px">
+		<canvas id="canvas" width="1024" height="1024" style="position: absolute; display: block; background-color:rgba(255, 255, 255, 1.00);"></canvas>
+		<div id="dom_overlay_container" style="pointer-events:none; overflow:hidden; width:1024px; height:1024px; position: absolute; left: 0px; top: 0px; display: block;">
 		</div>
 	</div>
 </body>
