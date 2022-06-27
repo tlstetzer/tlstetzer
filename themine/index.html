@@ -8,10 +8,10 @@
 
 	<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
 	<script src="https://code.createjs.com/1.0.0/createjs.min.js"></script>
-	<script src="https://code.createjs.com/1.0.0/createjs.min.js"></script>
 	<script src="themine.js"></script>
 	<script src="js/control.js"></script> 
-	<script src="js/animation.js"></script> 
+	<script src="js/animation.js"></script>
+	<script src="js/sound.js"></script>
 	<script src="js/mineBoard.js"></script> 
 	<script src="js/Classes.js"></script> 
 	
@@ -49,7 +49,7 @@
 				ss[ssMetadata[i].name] = new createjs.SpriteSheet( {"images": [queue.getResult(ssMetadata[i].name)], "frames": ssMetadata[i].frames} )
 			}
 			symbolLib = lib;
-			exportRoot = new lib.gameBoard_15c();
+			exportRoot = new lib.gameBoard_15f();
 			stage = new lib.Stage(canvas);	
 			stage.enableMouseOver();
 			

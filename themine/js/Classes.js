@@ -14,8 +14,12 @@ class Piece {
 		this.idUp = '';
 		this.idDown = '';
 		this.type = type;
-		this.isDug = false;
 		this.symbol;
+	}
+	
+	setType(type) {
+		this.symbol.gotoAndStop(type); 
+		this.type = type;
 	}
 }
 
@@ -27,6 +31,7 @@ class Miner {
 		
 		this.piece = 'p0000'; 
 		this.tool = 'none';
+		this.oldTool = 'none';
 		this.pos = 'bank';
 		
 		// locations
@@ -44,9 +49,9 @@ class Miner {
 		// elevator tunnel
 		this.tunnelAbove = { X: 938, Y: -115, S: 1 };
 		this.tunnelBelow = { X: 938, Y: 430, S: 1 };
-		this.tunnelOut = { X: 0, Y: 0, S: -1 };
+		this.tunnelOut = { X: 828, Y: 170, S: -1 };
 		this.tunnelIn = { X: 938, Y: 170, S: 1 };
-		
+
 		// elevator shaft
 		this.boardLeft = 0.1985;
 		this.boardRight = -0.1985;
@@ -67,10 +72,10 @@ class Miner {
 		sym.scaleX = this[loc].S;
 	}
 	
-	setBoardPosition(sym, x, y, dir) {
-		// facing 1=left, -1=right
-		if(dir !='' && dir == 'left') { sym.scaleX = 0.1985; }
-		if(dir !='' && dir == 'right') { sym.scaleX = -0.1985; }
+	setBoardPosition(sym, x, y, facing) {
+		// facing 0.1985=left, -0.1985=right
+		if(facing !='' && facing == 'left') { sym.scaleX = 0.1985; }
+		if(facing !='' && facing == 'right') { sym.scaleX = -0.1985; }
 		
 		var offset = 0;
 		if(sym.scaleX < 0) { offset = 15; }

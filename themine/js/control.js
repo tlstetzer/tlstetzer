@@ -1,15 +1,15 @@
 /* eslint no-unused-vars: 0 no-undef: 0*/
 
-var miner, elev, board, gPad, gBoard, stopButton, cButton, toolsEnabled			// Global Variables
-var lUp, lRight, lDown, lLeft, lStop, lPick, lPump, lJack, lDyn;				// Listeners
+// Global Variables
+var miner, elev, board, gPad, gBoard, stopButton, cButton, toolsEnabled;
+const cFormat = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', minimumFractionDigits: 0 });
 
 function gameInit() {
 	gPad = exportRoot.gamepad_mc;
 	gBoard = exportRoot.mineBoard_mc;
 	
 	eventHandlers();
-	
-//	startGame();	// debugging
+	soundInit();
 }
 
 function startGame() {
@@ -18,81 +18,65 @@ function startGame() {
 	elev = new Elev();
 	animationInit();
 	boardInit();
-	setSelected('', '');
+	setSelected('');
 	gBoard.info_text.text = 'Please wait while mine is scanned for gold!';
 	exportRoot.gotoAndStop('game');
 	drawBoard();
 }
 
-function makeMove(e, btn) {
+function makeMove(btn) {
 	stopButton = false;
 	cButton = btn;
 
-	// in the elevator at town level
 	if(miner.pos == 'townIn') {
+		// in the elevator at town level
 		if(btn == 'down') { exitTown(); }
 		else if(btn == 'left') { enterBank(); }
-		else { gBoard.info_text.text = 'You cannot move in that direction!'; }
-	}
-
-	// in the elevator at tunnel level
-	if(miner.pos == 'tunnelIn') {
+		else { showMessage('You cannot move in that direction!', 'error');  }
+	} else if(miner.pos == 'tunnelIn') {
+		// in the elevator at tunnel level
 		if(btn == 'up' || btn == 'down') { exitTunnel(btn); }
 		else if(btn == 'left') { exitElevator(); }
-		else { gBoard.info_text.text = 'You cannot move in that direction!'; }
-	}
-
-	// in the elevator shaft
-	if(miner.pos == 'elev') {
+		else { showMessage('You cannot move in that direction!', 'error');  }
+	} else if(miner.pos == 'elev') {
+		// in the elevator shaft
 		if(btn == 'up' || btn == 'down') { elevLevel(btn); }
-		else if(btn == 'left') { gBoard.info_text.text = 'You must stop the elevator before you can exit!'; }
-		else { gBoard.info_text.text = 'You cannot move in that direction!'; }
+		else if(btn == 'left') { showMessage('You must stop the elevator before you can exit!', 'error'); }
+		else { showMessage('You cannot move in that direction!', 'error');  }
+	} else { 
+		// inside the mine
+		moveInMine(btn); 
 	}
-	
-	// inside the mine
-	if(miner.pos == 'tunnelEnd') { moveInMine(btn); }
 }
 
 function moveInMine(btn) {
 	var piece = getPiece(miner.piece);
-	var newPiece;
+	var newID = '';
 	
-	if(btn == 'left') {
-		if(piece.idLeft == 'p00000') { gBoard.info_text.text = 'You cannot move in that direction!'; }
-		else {
-			newPiece = getPiece(piece.idLeft);
-			miner.piece = newPiece.ID;
-			miner.setBoardPosition(boardMiner, newPiece.minerX, newPiece.minerY, 'left');
+	if(btn == 'left') { newID = piece.idLeft; }
+	if(btn == 'right') { newID = piece.idRight; }
+	if(btn == 'up') { newID = piece.idUp; }
+	if(btn == 'down') { newID = piece.idDown; }
+	var newPiece = getPiece(newID);
+
+	if(piece.ID == 'p00000' || newPiece.type == 'cavein') { showMessage('You cannot move in that direction!', 'error'); }
+	else if(moveAllowed(newPiece) == true) { 
+		if(['dug', 'gold', 'shaft'].includes(newPiece.type)) { 
+			gBoard.info_text.text = '';
+			movePiece(newPiece, btn); 
 		}
+		else if(newPiece.type == 'hole') { fallDownHole(newPiece, btn); }
+		else if(newPiece.type == 'water') { playPump(newPiece, btn); }
+		else if(miner.tool == 'jackhammer') { playJackhammer(newPiece, btn); }
+		else if(miner.tool == 'dynamite') { playDynamite(newPiece, btn); }
+		else { playPickaxe(newPiece, btn); }
 	}
-	
-	if(btn == 'right') {
-		if(piece.idRight == 'p00000') { gBoard.info_text.text = 'You cannot move in that direction!'; }
-		else if(piece.idRight == 'p99999') { gBoard.info_text.text = 'At elevator!'; }
-		else {
-			newPiece = getPiece(piece.idRight);
-			miner.piece = newPiece.ID;
-			miner.setBoardPosition(boardMiner, newPiece.minerX, newPiece.minerY, 'right');
-		}
-	}
-	
-	if(btn == 'up') {
-		if(piece.idUp == 'p00000') { gBoard.info_text.text = 'You cannot move in that direction!'; }
-		else {
-			newPiece = getPiece(piece.idUp);
-			miner.piece = newPiece.ID;
-			miner.setBoardPosition(boardMiner, newPiece.minerX, newPiece.minerY, '');
-		}
-	}
-	
-	if(btn == 'down') {
-		if(piece.idDown == 'p00000') { gBoard.info_text.text = 'You cannot move in that direction!'; }
-		else {
-			newPiece = getPiece(piece.idDown);
-			miner.piece = newPiece.ID;
-			miner.setBoardPosition(boardMiner, newPiece.minerX, newPiece.minerY, '');
-		}
-	}
+
+	// debugging
+//	playPickaxe(newPiece, btn);
+//	playJackhammer(newPiece, btn);
+//	playPump(newPiece, btn);
+//	playDynamite(newPiece, btn);
 }
 
 function disableButtons(type) {
@@ -141,17 +125,20 @@ function enableButtons(type) {
 	}
 }
 
-function setSelected(e, btn) {
+function setSelected(btn) {
 	gPad.selectedPickaxe.visible = false;
 	gPad.selectedPump.visible = false;
 	gPad.selectedJackhammer.visible = false;
 	gPad.selectedDynamite.visible = false;
 	setTool(btn);
 	
-	if(btn == 'pickaxe') { gPad.selectedPickaxe.visible = true; }
-	if(btn == 'pump') { gPad.selectedPump.visible = true; }
-	if(btn == 'jackhammer') { gPad.selectedJackhammer.visible = true; }
-	if(btn == 'dynamite') { gPad.selectedDynamite.visible = true; }
+	if(btn == 'pickaxe') { gPad.selectedPickaxe.visible = true; miner.tool = 'pickaxe'; }
+	if(btn == 'jackhammer') { gPad.selectedJackhammer.visible = true; miner.tool = 'jackhammer'; }
+	if(btn == 'dynamite') { gPad.selectedDynamite.visible = true; miner.tool = 'dynamite'; }
+	if(btn == 'pump') { 
+		if(waterNearby() == true) { gPad.selectedPump.visible = true; miner.tool = 'pump'; }
+		else { showMessage('There is no water nearby to pump!', 'error'); }
+	}
 }
 
 function eventHandlers() {
@@ -159,18 +146,18 @@ function eventHandlers() {
 	exportRoot.intro_mc.btnStart.on('click', function() { startGame(); });
 	
 	// tool buttons
-	lPick = gPad.btnPickaxe.on('click', setSelected, null, false, 'pickaxe');
-	lPump = gPad.btnPump.on('click', setSelected, null, false, 'pump');
-	lJack = gPad.btnJackhammer.on('click', setSelected, null, false, 'jackhammer');
-	lDyn = gPad.btnDynamite.on('click', setSelected, null, false, 'dynamite');
+	gPad.btnPickaxe.on('click', function() { setSelected('pickaxe'); });
+	gPad.btnPump.on('click', function() { setSelected('pump'); });
+	gPad.btnJackhammer.on('click', function() { setSelected('jackhammer'); });
+	gPad.btnDynamite.on('click', function() { setSelected('dynamite'); });
 	toolsEnabled == true;
 
 	// gamepad buttons
-	lUp = gPad.btnUp.on('click', makeMove, null, false, 'up');
-	lRight = gPad.btnRight.on('click', makeMove, null, false, 'right');
-	lDown = gPad.btnDown.on('click', makeMove, null, false, 'down');
-	lLeft = gPad.btnLeft.on('click', makeMove, null, false, 'left');
-	lStop = gPad.btnStop.on('click', function() { stopButton = true; });
+	gPad.btnUp.on('click', function() { makeMove('up'); });
+	gPad.btnRight.on('click', function() { makeMove('right'); });
+	gPad.btnDown.on('click', function() { makeMove('down'); });
+	gPad.btnLeft.on('click', function() { makeMove('left'); });
+	gPad.btnStop.on('click', function() { stopButton = true; });
 
 	// keyboard events
 	$(document).on('keydown', function(e) {
@@ -186,7 +173,29 @@ function eventHandlers() {
 		if(key == 74 && toolsEnabled == true) { setSelected(e, 'jackhammer'); }
 		if(key == 68 && toolsEnabled == true) { setSelected(e, 'dynamite'); }
 		if([80, 87, 74, 68].indexOf(key) > 0 && toolsEnabled == false) {
-			gBoard.info_text.text = 'A tool cannot be selected at this time!';
+			showMessage('A tool cannot be selected at this time!', 'error');
 		}
 	});
+}
+
+function goldPrice() {
+	// check if game is over
+	if(miner.bank <= 0) { gameLost(); }
+	if(miner.bank >= 10000) { gameWon(); }
+	
+	// set gold price
+	var gp = miner.goldPrice;
+	var chg = random(40) - 20;
+	if(gp > 1000) chg = -Math.abs(chg);
+	if(gp < 200) chg = Math.abs(chg);
+	miner.goldPrice += chg;
+	
+	// update signs
+	var priceSign = cFormat.format(miner.goldPrice.toFixed()) + ' oz'; 
+	var goldSign = miner.goldOz + ' oz';
+	var bankSign = cFormat.format(miner.bankTotal.toFixed()); 
+	
+	gPad.txtPrice.text = priceSign.padStart(9, ' ');
+	gPad.txtGold.text = goldSign.padStart(6, ' ');
+	gPad.txtBank.text = bankSign.padStart(10, ' ');
 }

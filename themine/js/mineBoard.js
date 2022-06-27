@@ -27,13 +27,13 @@ function drawBoard() {
 			var piece = new Piece(id, row, col, x, y, mx, my, 'start');
 			piece.symbol = new symbolLib.piece();
 
-			if(col < 29) { piece.symbol.gotoAndStop('start'); } 
+			if(col < 29) { piece.setType('start'); } 
 			else if(col > 28 && col < 33) {
 				// end section
-				if([1, 5, 6, 7, 11, 12, 13, 17, 18].includes(row)) { piece.symbol.gotoAndStop('start'); } 
-				else { piece.symbol.gotoAndStop('dug'); piece.type = 'dug'; }
+				if([1, 5, 6, 7, 11, 12, 13, 17, 18].includes(row)) { piece.setType('start'); } 
+				else { piece.setType('dug'); }
 			} else { 
-				piece.symbol.gotoAndStop('shaft'); 
+				piece.setType('shaft'); 
 				piece.type = 'shaft'; 
 			}
 			
@@ -115,6 +115,7 @@ function drawBoard() {
 	}
 
 	// salt the mine
+	soundEffect('radar', -1, 0.5);
 	saltMine(250);
 }
 
@@ -127,11 +128,13 @@ function saltMine(loop) {
 		piece.type = 'action';
 		if(loop > 0) { saltMine(loop - 1); }
 		else {
-			gBoard.info_text.text = 'Begin Mining!'; 
+			stopEffect();
+			setTimeout(function() { showMessage('Begin Mining!', 'begin', .1); }, 5);
 			exitBank();
 //			exitElevator();		// debugging
 		}
-	}, 10);
+	}, 5);
+//	}, 1);
 }
 
 function getPiece(id) {
@@ -141,4 +144,86 @@ function getPiece(id) {
 function getByLevel(level) {
 	var piece = aBoard.find(p => p.row == level && p.col == 33);
 	return piece.ID;
+}
+
+function movePiece(piece, btn) {
+	var facing = '';
+	if(btn == 'left' || btn == 'right') { facing = btn; }
+	
+	miner.setBoardPosition(boardMiner, piece.minerX, piece.minerY, facing);
+	miner.piece = piece.ID;
+	goldPrice();
+}
+
+function moveAllowed(piece) {
+	// elevator shaft
+	if(piece.type == 'shaft' && boardElev.elevLevel != piece.row) {
+		showMessage('The elevator is not on this level!', 'error');
+		return false;
+	} else if (piece.type == 'water' && miner.tool != 'pump') {
+		showMessage('You must pump out the water before you can move in that direction!', 'error');
+		return false;
+	} else if (piece.type == 'rock' && miner.tool != 'jackhammer' && miner.tool != 'dynamite') {
+		showMessage('Solid rock, you can only use the Jackhammer or Dynamite!', 'error');
+		return false;
+	} else { 
+		return true; 
+	}
+}
+
+function checkAction(piece, btn) {
+	var rnd = random(15) - 1;
+	
+	// debugging
+//	rnd = 3;
+	
+	if(rnd == 3) {
+		// spring
+		playSpring(piece, btn);
+	} else if(rnd == 4 && piece.idDown != 'p00000') {
+		// footing
+		fallDownHole(piece, btn);
+	} else if(rnd == 6 || rnd ==7) {
+		// cave in
+		playCaveIn(piece, btn);
+	} else if(rnd == 8 || rnd ==9) {
+		// gold
+		var oz = random(3);
+		miner.goldOz += oz;
+		showMessage('Found gold nugget - ' + oz + ' oz!', 'gold', vol=.5);
+		piece.setType('gold');
+		movePiece(piece, btn);
+	} else if(rnd > 9) {
+		// rock
+		piece.setType('rock');
+		if(miner.tool == 'jackhammer' || miner.oldTool == 'dynamite') { 
+			gBoard.info_text.text = 'Solid rock!';
+			piece.setType('dug');
+			movePiece(piece, btn);
+		} else if(miner.tool == 'pickaxe') { 
+			showMessage("Solid rock, pickaxe won't do!", 'error', vol=.5); 
+		}
+	} else {
+		gBoard.info_text.text = 'Sandstone, easy digging!';
+		piece.setType('dug');
+		movePiece(piece, btn);
+	}
+}
+
+function waterNearby() {
+	var piece = getPiece(miner.piece);
+	var pieceLeft = getPiece(piece.idLeft);
+	var pieceRight = getPiece(piece.idRight);
+	var pieceUp = getPiece(piece.idDown);
+	var pieceDown = getPiece(piece.idUp);
+	
+	if(piece.type == 'water') { return true; }
+	else if(pieceLeft.type == 'water') { return true; }
+	else if(pieceRight.type == 'water') { return true; }
+	else if(pieceUp.type == 'water') { return true; }
+	else if(pieceDown.type == 'water') { return true; }
+	else { return false; }
+
+	// debugging
+//	return true;
 }
