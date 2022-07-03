@@ -23,7 +23,6 @@ function animationInit() {
 
 /* exit bank and enter elevator */
 function exitBank() {
-
 	animMiner.gotoAndPlay('walk');
 	anim.town_mc.gotoAndPlay('door');
 	
@@ -36,26 +35,61 @@ function exitBank() {
 			animMiner.gotoAndPlay('walk');
 			
 			// enter elevator
-			createjs.Tween.get(animMiner).to({x: miner.townIn.X, y: miner.townIn.Y}, 500).on('complete', function() {
+			createjs.Tween.get(animMiner).to({x: miner.townIn.X-50, y: miner.townIn.Y}, 500).on('complete', function() {
 				animMiner.gotoAndStop('stand');
 				miner.setPosition(animMiner, 'townIn');
 				townElev.gotoAndPlay('closeDoor');
 				enableButtons('buttons');
+				
+				if(miner.bankTotal == 1000 && miner.goldPrice == 600) {
+					setTimeout(function() { showMessage('Begin Mining!', 'begin', .1); }, 500);
+				}
 			});
 		});
 	});
-/*
-	// debugging
-	miner.setPosition(animMiner, 'townIn'); 	
-	animMiner.gotoAndStop('stand');
-	enableButtons('buttons');
-*/
+}
+
+/* exit elevator and enter bank */
+function enterBank() {
+	disableButtons('all');
+
+	townElev.gotoAndPlay('openDoor');
+	createjs.Tween.get(animMiner).wait(500).call(function() {
+		// walk to end
+		animMiner.gotoAndPlay('walk');
+		townElev.gotoAndPlay('closeDoor');
+		
+		// open bank door
+		createjs.Tween.get(animMiner).wait(1200).call(function() {
+			anim.town_mc.gotoAndPlay('door');
+		});
+		
+		// walk to bank
+		createjs.Tween.get(animMiner).to({x: miner.bank.X+50, y: miner.bank.Y}, 2000).on('complete', function() {
+			animMiner.gotoAndStop('stand');
+			miner.setPosition(animMiner, 'bank');
+			soundEffect('bankDeposit', 0, .5);
+			
+			// exit bank
+			setTimeout(function() { 
+				stopEffect(); 
+				exitBank();
+				
+				// update bank
+				var gold = miner.goldOz * miner.goldPrice;
+				miner.bankTotal += gold;
+				miner.goldOz = 0;
+				goldPrice();
+			}, 2500);
+		});
+	});
 }
 
 /* lower elevator from town and start elevator in shaft */
 function exitTown() {
 	// lower elevator
-	createjs.Tween.get(townElev).to({y: elev.belowTown.Y}, 1000).on('complete', function() { 
+	soundEffect('elevator', -1, .5);
+	createjs.Tween.get(townElev).wait(1000).to({y: elev.belowTown.Y}, 1000).on('complete', function() { 
 		elev.setPosition(townElev, 'belowTown');
 		elev.elevLevel = -1;
 		stopButton = false;
@@ -63,7 +97,7 @@ function exitTown() {
 	});
 	
 	// lower miner
-	createjs.Tween.get(animMiner).to({y: 390}, 1000).on('complete', function() { 
+	createjs.Tween.get(animMiner).wait(1000).to({y: 390}, 1000).on('complete', function() { 
 		miner.setPosition(animMiner, 'townBelow');
 	});
 }
@@ -72,16 +106,18 @@ function exitTown() {
 function arriveTown() {
 	disableButtons('all');
 	miner.setPosition(animMiner, 'townBelow');  // move miner into town elevator
-	
+
 	// raise elevator
 	createjs.Tween.get(townElev).to({y: elev.inTown.Y}, 1000).on('complete', function() { 
 		elev.elevLevel = 0;
+		stopEffect();
 		stopButton = false;
+		soundEffect('ding', 0, .5);
 		enableButtons('buttons');
 	});
 	
 	// raise miner
-	createjs.Tween.get(animMiner).to({y: miner.inTown.Y}, 1000).on('complete', function() {
+	createjs.Tween.get(animMiner).to({y: miner.townIn.Y}, 1000).on('complete', function() {
 		miner.setPosition(animMiner, 'townIn');
 	});
 }
@@ -93,13 +129,20 @@ function arriveTunnel(dir) {
 	var minerY = miner.tunnelIn.Y;
 
 	// move miner into tunnel elevator
-	if(dir == 'down') { miner.setPosition(animMiner, 'tunnelAbove'); } 
-	else { miner.setPosition(animMiner, 'tunnelBelow'); }
+	if(dir == 'down') { 
+		miner.setPosition(animMiner, 'tunnelAbove'); 
+		elev.setPosition(tunnelElev, 'aboveTunnel');
+	} else { 
+		miner.setPosition(animMiner, 'tunnelBelow'); 
+		elev.setPosition(tunnelElev, 'belowTunnel');
+	}
 
 	// move elevator
 	createjs.Tween.get(tunnelElev).to({y: elevY}, 1000).on('complete', function() { 
-		elev.setPosition(townElev, 'inTunnel');
+		elev.setPosition(tunnelElev, 'inTunnel');
+		stopEffect();
 		stopButton = false;
+		soundEffect('ding', 0, .5);
 		enableButtons('buttons');
 	});
 	
@@ -107,42 +150,43 @@ function arriveTunnel(dir) {
 	createjs.Tween.get(animMiner).to({y: minerY}, 1000).on('complete', function() {
 		miner.setPosition(animMiner, 'tunnelIn');
 	});
-/*	
+	
 	// debugging
 	enableButtons('buttons');
 	stopButton = false;
-	elev.setPosition(townElev, 'inTunnel');
+	elev.setPosition(tunnelElev, 'inTunnel');
 	miner.setPosition(animMiner, 'tunnelIn');
-*/	
+
 }
 
 /* raise or lower elevator out of tunnel */
 function exitTunnel(dir) {
 	disableButtons('all');
 	var elevY, minerY, elevP, minerP;
-	
-	if(dir == 'up') { 
-		elevY = elev.aboveTunnel.Y; 
-		minerY = miner.tunnelAbove.Y; 
-		elevP = 'aboveTunnel';
-		minerP = 'tunnelAbove';
-	} else { 
+	soundEffect('elevator', -1, .5); 
+
+	if(dir == 'down') { 
 		elevY = elev.belowTunnel.Y; 
 		minerY = miner.tunnelBelow.Y; 
 		elevP = 'belowTunnel';
 		minerP = 'tunnelBelow';
+	} else { 
+		elevY = elev.aboveTunnel.Y; 
+		minerY = miner.tunnelAbove.Y; 
+		elevP = 'aboveTunnel';
+		minerP = 'tunnelAbove';
 	}
-	
+
 	// move elevator
-	createjs.Tween.get(tunnelElev).to({y: elevY}, 1000).on('complete', function() { 
-		elev.setPosition(townElev, elevP);
+	createjs.Tween.get(tunnelElev).wait(1000).to({y: elevY}, 1000).on('complete', function() { 
+		elev.setPosition(tunnelElev, elevP);
 		stopButton = false;
 		enableButtons('buttons');
 		elevLevel(dir);
 	});
 	
 	// move miner
-	createjs.Tween.get(animMiner).to({y: minerY }, 1000).on('complete', function() {
+	createjs.Tween.get(animMiner).wait(1000).to({y: minerY }, 1000).on('complete', function() {
 		miner.setPosition(animMiner, minerP);
 	});
 }
@@ -159,22 +203,18 @@ function elevLevel(dir) {
 		miner.elevDir = '';
 		miner.piece = miner.shaftPiece[elev.elevLevel];
 		arriveTunnel(dir);
-	} else if(dir == 'up' && elev.elevLevel < 0) {
+	} else if(dir == 'up' && elev.elevLevel == 0) {
 		// at the top
 		miner.elevDir = '';
 		miner.piece = miner.shaftPiece[elev.elevLevel];
 		arriveTown(dir);
 	} else {
 		// next level
-//		var eStartY = boardElev.y;			// debugging
-//		var mStartY = boardMiner.y;			// debugging
 		if(dir == 'down') { elev.elevLevel++; }
 		if(dir == 'up')   { elev.elevLevel--; }
 		var level = elev.elevLevel;
-		var elevY = elev.elevY[level];
-		
-//		var elevatorY = boardElev.y;		// debugging
-//		var minerY = boardMiner.y;			// debugging
+		var elevY = elev.elevY[elev.elevLevel];
+		if(level %2 == 0) { soundEffect('ping', 0, .5); }
 
 		// move elevator
 		createjs.Tween.get(boardElev).to({y: elevY}, 1000).on('complete', function() { 
@@ -206,16 +246,28 @@ function exitElevator() {
 			moveInMine('left');
 		});
 	});
-/*	
-	// debugging
-	boardElev.elevLevel = 1;
-	boardElev.y = elev.elevY[1];
-	boardMiner.y = elev.elevY[1];
-	miner.setPosition(animMiner, 'tunnelEnd');
-	miner.piece = getByLevel(1);
-	enableButtons('all');
-	setSelected('pickaxe');
-*/
+}
+
+function enterTunnelElevator(piece, btn) {
+	disableButtons('all');
+	animMiner.scaleX = -1;
+	animMiner.gotoAndPlay('walk');
+	createjs.Tween.get(animMiner).to({x: miner.tunnelOut.X, y: miner.tunnelOut.Y}, 3000).on('complete', function() {
+		animMiner.gotoAndStop('stand');
+		tunnelElev.gotoAndPlay('openDoor');
+		
+		// enter elevator
+		createjs.Tween.get(animMiner).wait(500).call(function() {
+			animMiner.gotoAndPlay('walk');
+			createjs.Tween.get(animMiner).to({x: miner.tunnelIn.X-50, y: miner.tunnelIn.Y}, 500).on('complete', function() {
+				animMiner.gotoAndStop('stand');
+				miner.setPosition(animMiner, 'tunnelIn');
+				tunnelElev.gotoAndPlay('closeDoor');
+				enableButtons('buttons');
+				movePiece(piece, btn);
+			});
+		});
+	});
 }
 
 function setTool(btn) {
@@ -279,7 +331,7 @@ function playJackhammer(piece, btn) {
 	// move piece
 	setTimeout(function() { 
 		enableButtons('all');
-		animMiner.gotoAndStop('jackhammer');
+		setSelected('pickaxe');
 		miner.bankTotal -= 35;
 		goldPrice();
 		
@@ -496,4 +548,14 @@ function floodPieces(aPieces, loop, piece, btn) {
 			setTimeout(function() { playPump(piece, btn); }, 1000);
 		}
 	}, 200);
+}
+
+function gameWon() {
+	soundEffect('gold', 0, 0.5);
+	exportRoot.gotoAndStop('won');
+}
+
+function gameLost() {
+	soundEffect('error', 0, 0.5);
+	exportRoot.gotoAndStop('lost');
 }

@@ -25,13 +25,17 @@ function startGame() {
 }
 
 function makeMove(btn) {
+	gBoard.info_text.text = '';
 	stopButton = false;
 	cButton = btn;
 
 	if(miner.pos == 'townIn') {
 		// in the elevator at town level
 		if(btn == 'down') { exitTown(); }
-		else if(btn == 'left') { enterBank(); }
+		else if(btn == 'left') { 
+			if(miner.goldOz > 0) { enterBank(); }
+			else { showMessage("You don't have any gold to deposit!", 'error'); }
+		}
 		else { showMessage('You cannot move in that direction!', 'error');  }
 	} else if(miner.pos == 'tunnelIn') {
 		// in the elevator at tunnel level
@@ -61,22 +65,14 @@ function moveInMine(btn) {
 
 	if(piece.ID == 'p00000' || newPiece.type == 'cavein') { showMessage('You cannot move in that direction!', 'error'); }
 	else if(moveAllowed(newPiece) == true) { 
-		if(['dug', 'gold', 'shaft'].includes(newPiece.type)) { 
-			gBoard.info_text.text = '';
-			movePiece(newPiece, btn); 
-		}
+		if(['dug', 'gold'].includes(newPiece.type)) { movePiece(newPiece, btn); }
+		else if(newPiece.type == 'shaft') { enterTunnelElevator(newPiece, btn); }
 		else if(newPiece.type == 'hole') { fallDownHole(newPiece, btn); }
 		else if(newPiece.type == 'water') { playPump(newPiece, btn); }
 		else if(miner.tool == 'jackhammer') { playJackhammer(newPiece, btn); }
 		else if(miner.tool == 'dynamite') { playDynamite(newPiece, btn); }
 		else { playPickaxe(newPiece, btn); }
 	}
-
-	// debugging
-//	playPickaxe(newPiece, btn);
-//	playJackhammer(newPiece, btn);
-//	playPump(newPiece, btn);
-//	playDynamite(newPiece, btn);
 }
 
 function disableButtons(type) {
@@ -144,6 +140,8 @@ function setSelected(btn) {
 function eventHandlers() {
 	// start button
 	exportRoot.intro_mc.btnStart.on('click', function() { startGame(); });
+	exportRoot.won_mc.btnStart.on('click', function() { startGame(); });
+	exportRoot.lost_mc.btnStart.on('click', function() { startGame(); });
 	
 	// tool buttons
 	gPad.btnPickaxe.on('click', function() { setSelected('pickaxe'); });
@@ -162,16 +160,16 @@ function eventHandlers() {
 	// keyboard events
 	$(document).on('keydown', function(e) {
 		var key = e.which;
-		if(key == 38) { makeMove(e, 'up'); }
-		if(key == 39) { makeMove(e, 'right'); }
-		if(key == 40) { makeMove(e, 'down'); }
-		if(key == 37) { makeMove(e, 'left'); }
+		if(key == 38) { makeMove('up'); }
+		if(key == 39) { makeMove('right'); }
+		if(key == 40) { makeMove('down'); }
+		if(key == 37) { makeMove('left'); }
 		if(key == 32) { stopButton = true; }
 		
-		if(key == 80 && toolsEnabled == true) { setSelected(e, 'pickaxe'); }
-		if(key == 87 && toolsEnabled == true) { setSelected(e, 'pump'); }
-		if(key == 74 && toolsEnabled == true) { setSelected(e, 'jackhammer'); }
-		if(key == 68 && toolsEnabled == true) { setSelected(e, 'dynamite'); }
+		if(key == 80 && toolsEnabled == true) { setSelected('pickaxe'); }
+		if(key == 87 && toolsEnabled == true) { setSelected('pump'); }
+		if(key == 74 && toolsEnabled == true) { setSelected('jackhammer'); }
+		if(key == 68 && toolsEnabled == true) { setSelected('dynamite'); }
 		if([80, 87, 74, 68].indexOf(key) > 0 && toolsEnabled == false) {
 			showMessage('A tool cannot be selected at this time!', 'error');
 		}
@@ -180,8 +178,8 @@ function eventHandlers() {
 
 function goldPrice() {
 	// check if game is over
-	if(miner.bank <= 0) { gameLost(); }
-	if(miner.bank >= 10000) { gameWon(); }
+	if(miner.bankTotal <= 0) { gameLost(); }
+	if(miner.bankTotal >= 10000) { gameWon(); }
 	
 	// set gold price
 	var gp = miner.goldPrice;

@@ -129,11 +129,9 @@ function saltMine(loop) {
 		if(loop > 0) { saltMine(loop - 1); }
 		else {
 			stopEffect();
-			setTimeout(function() { showMessage('Begin Mining!', 'begin', .1); }, 5);
 			exitBank();
-//			exitElevator();		// debugging
 		}
-	}, 5);
+	}, 10);
 //	}, 1);
 }
 
@@ -157,11 +155,14 @@ function movePiece(piece, btn) {
 
 function moveAllowed(piece) {
 	// elevator shaft
-	if(piece.type == 'shaft' && boardElev.elevLevel != piece.row) {
+	if(piece.type == 'shaft' && elev.elevLevel != piece.row) {
 		showMessage('The elevator is not on this level!', 'error');
 		return false;
 	} else if (piece.type == 'water' && miner.tool != 'pump') {
 		showMessage('You must pump out the water before you can move in that direction!', 'error');
+		return false;
+	} else if (piece.type != 'water' && miner.tool == 'pump') {
+		showMessage("There's no water in that direction!", 'error');
 		return false;
 	} else if (piece.type == 'rock' && miner.tool != 'jackhammer' && miner.tool != 'dynamite') {
 		showMessage('Solid rock, you can only use the Jackhammer or Dynamite!', 'error');
@@ -173,17 +174,14 @@ function moveAllowed(piece) {
 
 function checkAction(piece, btn) {
 	var rnd = random(15) - 1;
-	
-	// debugging
-//	rnd = 3;
-	
+
 	if(rnd == 3) {
 		// spring
 		playSpring(piece, btn);
 	} else if(rnd == 4 && piece.idDown != 'p00000') {
 		// footing
 		fallDownHole(piece, btn);
-	} else if(rnd == 6 || rnd ==7) {
+	} else if(rnd == 6) {
 		// cave in
 		playCaveIn(piece, btn);
 	} else if(rnd == 8 || rnd ==9) {
@@ -193,7 +191,7 @@ function checkAction(piece, btn) {
 		showMessage('Found gold nugget - ' + oz + ' oz!', 'gold', vol=.5);
 		piece.setType('gold');
 		movePiece(piece, btn);
-	} else if(rnd > 9) {
+	} else if(rnd > 10) {
 		// rock
 		piece.setType('rock');
 		if(miner.tool == 'jackhammer' || miner.oldTool == 'dynamite') { 
@@ -223,7 +221,4 @@ function waterNearby() {
 	else if(pieceUp.type == 'water') { return true; }
 	else if(pieceDown.type == 'water') { return true; }
 	else { return false; }
-
-	// debugging
-//	return true;
 }
