@@ -4,18 +4,13 @@ $(document).ready(function() {
 	initGame();
 	board = cbmScreen();
 	$('#names').hide();
+	$('#gameboard').hide();
+	showTitle();
 });
 
 function initGame() {
-	// game title
-	$('#names').hide();
-	$('#gameboard').hide();
-	showTitle('OURANOS!', '21');  // gosub 62000
-	
-	
-	
-//	q=59467:r=59466:s=59464:pokeq,16:poker,15:pokes,0:h=33530;
-//	f=28:g=28:m=3:mm=0
+	memory = 33530;
+	houseStanding();
 }
 
 // 100 to 108
@@ -38,29 +33,31 @@ function getNames() {
 	}
 }
 
-function gosub970() {
-	var f=0, g=-1, p=0;
+function houseStanding() {
+	var g=-1, p=0;
 	
 	while(g == -1) {
 		for(var y=1; y<5; y++) {
 			for(var x=1; x<8; x++) {
-				h++;
-				d = peek(h);
-				if(d != 32) { p++; }
+				memory++;
+				var peek = cbmPeek(memory, board);
+				if(peek != 32) { p++; }
 			}
-			h = h - 47;
+
+			memory = memory - 47;
 		}
 		
 		if(g == -1) {
-			f = p;
+			house1 = p;
 			g = 0;
 			p = 0;
-			h = h + 187;
+			memory = memory + 187;
 		}
+		
+		house2 = p;
+		memory = 33530;
 	}
 
-	g = p;
-	h = 33530;
 	return;
 }
 
