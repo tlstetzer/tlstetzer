@@ -1,0 +1,35 @@
+<!doctype html>
+<html>
+<head>
+	<meta charset="utf-8">
+	<title>Ouranos!</title>
+  	<link rel="icon" href="../images/Caricature.png">
+	
+	<link rel="stylesheet" href="../cbm/cbm.css" />
+	<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+	<script src="../includes/papaparse.min.js"></script>
+	<script src="../cbm/cbm.js"></script>
+	<script src="ouranos.js"></script>
+	<script src="gameboard.js"></script>
+	
+	<script>
+		var board, name1, name2;
+		var debug = true;
+	</script>
+</head>
+
+<body>
+	<div>
+		<div id="title"></div>
+		<div id="names">
+			<br><br>
+			WHAT'S PLAYER 1'S NAME? <input id="name1" maxlength="7" value="">
+			<br><br>
+			WHAT'S PLAYER 2'S NAME? <input id="name2" maxlength="7" value="">
+			<br><br>
+		</div>
+		<br>
+		<div id="cbmScreen"></div>
+	</div>
+</body>
+</html>
