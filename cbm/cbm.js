@@ -97,7 +97,7 @@ function cbmPeek(memValue, screen) {
 	for(var row=0; row<26; row++) {
 		for(var col=0; col<40; col++) {
 			if(screen[row][cell].mem == memValue) {
-				cell = screen[row][cell].char;
+				cell = screen[row][cell].poke;
 			}
 		}
 	}
