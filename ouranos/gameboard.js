@@ -31,12 +31,20 @@ function buildBoard() {
 	cbmRow(row++, 0, sRow);
 	
 	// names
-	var pad = Math.ceil((7 - name.length) / 2);
-	cbmRow(19, pad, name1);
-	cbmRow(19, pad + 26, name2);
+	var pad1 = Math.ceil((7 - name1.length) / 2);
+	cbmRow(19, pad1, name1);
+	var pad2 = Math.ceil((7 - name2.length) / 2);
+	cbmRow(19, pad2 + 26, name2);
 	
 	// bottom
 	sRow = '{RVON}';
 	for(col=0; col<40;col++) { sRow += '{CBM-I}'; }
 	cbmRow(22, 0, sRow);
+	
+	// start game
+	house1 = 28;
+	house2 = 28;
+	m = 3;
+	mm = 0;
+	playGame();
 }

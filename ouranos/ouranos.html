@@ -13,7 +13,9 @@
 	<script src="gameboard.js"></script>
 	
 	<script>
-		var board, name1, name2;
+		var board;
+		var name1;  // ep$ 
+		var name2;  // wp$
 		var memory; // h
 		var house1; // f
 		var house2; // g
@@ -30,9 +32,14 @@
 			<br><br>
 			WHAT'S PLAYER 2'S NAME? <input id="name2" maxlength="7" value="">
 			<br><br>
+			<button id="nameInput"> Play Game </button>
 		</div>
 		<br>
 		<div id="cbmScreen"></div>
+		<div id="playAgain">
+			<button id="playButton"> Play Again </button>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+			<button id="endButton"> End Game </button>
+		</div>
 	</div>
 </body>
 </html>
