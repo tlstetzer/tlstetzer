@@ -158,9 +158,6 @@ class CBM {
 	
 	cbmSetID() {
 		var id = 'R' + this.row + 'C' + this.col;
-		if(this.col < 0) {
-			var b = 'break 162';
-		}
 		return id;
 	}
 

@@ -1,130 +1,93 @@
 /* eslint no-unused-vars: 0 no-undef: 0*/
 
 $(document).ready(function() {
-	memory = 33530;
-	board = cbmScreen();
+	cbm = new CBM(splashScreen);
 	$('#names').hide();
-	$('#gameboard').hide();
 	$('#playAgain').hide();
-	showTitle();
 });
 
-function playGame() {
-	houseStanding();
-	if(house1 < 1 || house2 < 1) { endGame(); }
+function initGame() {
+	setVariables();
+	spc20 = '{rvof}                    ';
+	padEP = '       '.substring(0, Math.ceil((7 - ep$.length) / 2));
+	padWP = '       '.substring(0, Math.ceil((7 - wp$.length) / 2));
+	
+	// draw border
+	cbm.cbmDisplay('{clr}{CBM-A}');
+	for(var v=0; v<38; v++) { cbm.cbmDisplay('{SHIFT-*}'); }
+	cbm.cbmDisplay('{CBM-S}');
+	for(v=0; v<19; v++) { cbm.cbmDisplay('{SHIFT--}' + bl$ + '{SHIFT--}'); }
+	
+	// draw houses
+	cbm.cbmDisplay('{up}{up}{up}{up}{rght}{rght}{rght}{rvon}{SHIFT-POUND}M    {CBM-*}' + spc20 + '{rvon}{SHIFT-POUND}    N{CBM-*}');
+	cbm.cbmDisplay('{down}{rght}{rght}{rght}{rvon} {CBM-M}{CBM-T}{CBM-T}{CBM-T}{CBM-T}{CBM-T}' + spc20 + '{rvon}{CBM-T}{CBM-T}{CBM-T}{CBM-T}{CBM-T}{CBM-G} ');
+	cbm.cbmDisplay('{down}{rght}{rght}{rght}{rvon} {CBM-M}     ' + spc20 + '{rvon}     {CBM-G} ');
+	cbm.cbmDisplay('{down}{rght}{rght}{rght}{rvon}{CBM-@}{SHIFT-@}{CBM-@}{CBM-@}{CBM-@}{CBM-@}{CBM-@}' + spc20 + '{rvon}{CBM-@}{CBM-@}{CBM-@}{CBM-@}{CBM-@}L{CBM-@}');
+	cbm.cbmDisplay('{up}{rght}{rght}{rght}{rvon}' + padEP + ep$.substring(0, 7));
+	for(v=0; v<21; v++) { cbm.cbmDisplay('{rght}'); }
+	cbm.cbmDisplay('{rvon}' + padWP + wp$.substring(0, 7));
+	cbm.cbmDisplay(a$);
+	for(v=0; v<40; v++) { cbm.cbmDisplay('{rvon}{CBM-I}'); }
+	
+	// sound
+	// poke q,16:poker,15
+	
+	
 /*
-  310 m=m+1:ifm>3thenm=1:mm=mm+1:b=0:print"{home}";tab(15);"{SHIFT-*}{SHIFT-*}{SHIFT-*}{SHIFT-*}{SHIFT-*}{SHIFT-*}{SHIFT-*}{SHIFT-*}{SHIFT-*}{SHIFT-*}{SHIFT-*}
-  315 ifm=3andrnd(1)>.33then310
-  320 print"{home}{down}{rvof}";:forv=1to3:print"{SHIFT--}";bl$;"{SHIFT--}";:nextv:print
-  330 a=32812:aa=rnd(1)*26:a=a+aa:b=1-b
-  340 pokea,104:forv=1to4:a=a+1:pokea,102:next:forv=1to5:a=a+1:pokea,104:next
-  350 a=a+27:pokea,104:forv=1to11:a=a+1:pokea,102:next:pokea,104:a=a+33
-  360 pokea,104:forv=1to6:a=a+1:pokea,102:next:pokea,104:nn=0
-  365 printa$"{rvon}";bl$;"  ":printa$;"{rght}{rght}{rght}";
-  370 ifm=3thenprint"target"spc(21)"target":goto400
-  380 ifb=0thenprint"target"spc(21)"{rvon}attacker":goto400
-  390 print"{rvon}attacker{rvof}"spc(20)"target
+  240 forv=1to19:print"{SHIFT--}";bl$;"{SHIFT--}";:next
+  250 print"{up}{up}{up}{up}{rght}{rght}{rght}{rvon}{SHIFT-POUND}M    {CBM-*}"spc(20)"{SHIFT-POUND}    N{CBM-*}"
+  255 print"{up}{rght}{rght}{rght}{rvon} {CBM-M}{CBM-T}{CBM-T}{CBM-T}{CBM-T}{CBM-T}"spc(20)"{CBM-T}{CBM-T}{CBM-T}{CBM-T}{CBM-T}{CBM-G} "
+  260 print"{rght}{rght}{rght}{rvon} {CBM-M}     "spc(20)"     {CBM-G} "
+  265 t$=left$(ep$,7):print"{up}{up}{rvon}";spc(3.5+(7-len(t$))/2);t$
+  275 t$=left$(wp$,7):print"{up}{up}{rvon}";spc(30+(7-len(t$))/2);t$
+  285 print"{up}{rght}{rght}{rght}{rvon}{CBM-@}{SHIFT-@}{CBM-@}{CBM-@}{CBM-@}{CBM-@}{CBM-@}"spc(20)"{CBM-@}{CBM-@}{CBM-@}{CBM-@}{CBM-@}L{CBM-@}"
+  290 printa$:forv=1to40:print"{rvon}{CBM-I}";:next:print
+  295 poke q,16:poker,15
 */
-	
 }
 
-// 100 to 108
+function setVariables() {
+//	q=59467;:r=59466:s=59464:pokeq,16:poker,15:pokes,0: (sound)
+	h = 33530;
+	a$ = '{home}{down}{down}{down}{down}{down}{down}{down}{down}{down}{down}{down}{down}{down}{down}{down}{down}{down}{down}{down}{down}';
+	bl$ = '                                      ';
+	c$ = '{CBM-M}{left}{down}N{left}{down}M{down}M{left}{down}NM{CBM-@}{left}{left}{left}{down}M  M{left}{left}{left}{left}{down}{CBM-M}{left}{down}N{left}{left}{down}N{left}{down}';
+	d$ = ' {left}{down} {left}{down} {down} {left}{down}   {left}{left}{left}{down}    {left}{left}{left}{left}{down} {left}{down} {left}{left}{down} {left}{down}';
+	e$ = c$ + 'M{left}{down}N{left}{left}{down}N{left}{down}{CBM-G}{left}{left}{down}N{left}{left}{left}{left}{down} {CBM-@}N {left}{left}{left}{left}{down}N ';
+	f$ = d$ + ' {left}{down} {left}{left}{down} {left}{down} {left}{left}{down} {left}{left}{left}{down}  {left}{left}{left}{down} ';
+	g$ = c$ + 'M{down}{CBM-G}{left}{down}{CBM-G}{left}{down}M{down}M{left}{down} M{CBM-@} {left}{left}{down} M';
+	h$ = d$ + ' {down} {left}{down} {left}{down} {down} {down}  {down} ';
+	i$ = c$ + 'M{down}M{down}{CBM-G}{left}{left}{down} {CBM-G}{left}{left}{left}{down} N {left}{left}{left}{left}{down} N {left}{left}{left}{down} {CBM-G}';
+	j$ = d$ + ' {down} {down} {left}{down} {left}{left}{down} {left}{left}{down} {left}{down} ';
+	f=28;
+	g=28;
+	m=3;
+	mm=0;
+}
+
 function getNames() {
-	if(debug == true) {
-		name1 = 'terri';
-		name2 = 'skeeter';
-		setTimeout(function() { buildBoard(); }, 300);
+	// get names
+	if(debug === false) {
+		cbm.cbmDisplay("{down}what's player 1's name? ");
+		ep$ = cbm.cbmInput(7);
+		cbm.cbmDisplay("{down}what's player 2's name? ");
+		wp$ = cbm.cbmInput(7);
 	} else {
-		$('#title').hide();
-		$('#names').show();
-
-		// button click
-		$('#nameButton').on('click', function() {
-			$('#names').hide();
-			name1 = $('#name1').val().toLowerCase();
-			name2 = $('#name2').val().toLowerCase();
-			buildBoard();
-		});
+		ep$ = 'terri';
+		wp$ = 'skeeter';
+		initGame();
 	}
 }
 
-function houseStanding() {
-	var g=-1, p=0;
-	
-	while(g == -1) {
-		for(var y=1; y<5; y++) {
-			for(var x=1; x<8; x++) {
-				memory++;
-				var peek = cbmPeek(memory, board);
-				if(peek != 32) { p++; }
-			}
-
-			memory = memory - 47;
-		}
-		
-		if(g == -1) {
-			house1 = p;
-			g = 0;
-			p = 0;
-			memory = memory + 187;
-		}
-		
-		house2 = p;
-		memory = 33530;
-	}
-
-	return;
-}
-
-function endGame() {
-	// clear bottom
-	var sRow = '{RVON}                                        ';
-	cbmRow(21, 0, sRow);
-	cbmRow(22, 0, sRow);
-	cbmRow(23, 0, sRow);
-	
-	// get totals
-	b$ = name2;
-	var p=house1 * 3.6;
-	if(house2 > 0) {
-		b$=name1;
-		p=house2 * 3.6;
-	}
-	
-	// display names
-	var pad1 = Math.ceil((7 - name.length) / 2);
-	var pad2 = Math.ceil((7 - name2.length) / 2);
-	cbmRow(14, pad1, '{RVON}' + name1);
-	cbmRow(14, pad2 + 26, '{RVON}' + name2);
-	
-	// print % left
-	cbmRow(16, pad, parseInt(house1 * 3.6) + ' % left');
-	cbmRow(16, pad + 26, parseInt(house2 * 3.6) + ' % left');
-	
-	// print winner
-	if(house1 == house2) { cbmRow(18, 35, "it's a tie!"); }
-	else if(house1 < house2) { cbmRow(18, 18 - pad2, "the winner is: " + house2); }
-	else { cbmRow(18, 18 - pad1, "the winner is: " + house2); }
-	
-	$('#playAgain').show();
-	$('#playButton').on('click', function() {
-		var temp = name1;
-		name1 = name2;
-		name2 = temp;
-		buildBoard();
-	});
-	$('#playButton').on('click', function() { location.reload(); });
-}
-
-// 62000 to 62060
-function showTitle() {
-	if(debug == false) {
-		var html = '<br><br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;CURSOR #21&nbsp;&nbsp;Ouranos';
-		html += '<br> COPYRIGHT (c) 1980  by KATHY HIGBY<br>'
-		html += '<hr>';
-		html += '<br>TAKE THE ENEMY BY STORM';
-		html += '<br><br><br>PRESS {RV}RETURN{RV} TO BEGIN';
-		$('#title').html(html);
+function splashScreen() {
+	if(debug === false) {
+		cbm.cbmDisplay('{clr}{down}{down}');
+		cbm.cbmTab(9);
+		cbm.cbmDisplay('cursor #' + '21  ' + 'ouranos!');
+		cbm.cbmDisplay('{down} copyright (c) 1980  by kathy higby{down}');
+		for(var i=0; i<10; i++) { cbm.cbmDisplay('{SHIFT-*}{SHIFT-*}{SHIFT-*}{SHIFT-*}'); }
+		cbm.cbmDisplay('{down}take the enemy by storm');
+		cbm.cbmDisplay('{down}{down}{down}press {rvon}return{rvof} to begin');
 
 		// wait for enter key
 		$(document).on('keypress', function(key) {
