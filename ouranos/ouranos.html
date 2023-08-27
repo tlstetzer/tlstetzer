@@ -10,38 +10,21 @@
 	<script src="../includes/papaparse.min.js"></script>
 	<script src="../cbm/cbm.js"></script>
 	<script src="ouranos.js"></script>
+	<script src="OuranosGame.js"></script>
 	
 	<script>
-		var cbm;
+		var debug = true;
+		var cbm, game;
+/*
 		var padEP, padWP, spc20;
 		var h, f, g, m, mm;
 		var ep$, wp$, a$, bl$, c$, d$, e$, f$, g$, h$, i$, j$;
-		var name1;  // ep$ 
-		var name2;  // wp$
-		var memory; // h
-		var house1; // f
-		var house2; // g
-		var debug = true;
+*/
 	</script>
 </head>
 
 <body>
-	<div>
-		<div id="title"></div>
-		<div id="names">
-			<br><br>
-			WHAT'S PLAYER 1'S NAME? <input id="name1" maxlength="7" value="">
-			<br><br>
-			WHAT'S PLAYER 2'S NAME? <input id="name2" maxlength="7" value="">
-			<br><br>
-			<button id="nameInput"> Play Game </button>
-		</div>
-		<br>
-		<div id="cbmScreen"></div>
-		<div id="playAgain">
-			<button id="playButton"> Play Again </button>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-			<button id="endButton"> End Game </button>
-		</div>
-	</div>
+	<br>
+	<div id="cbmScreen"></div>
 </body>
 </html>
