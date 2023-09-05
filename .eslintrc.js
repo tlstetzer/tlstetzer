@@ -1,7 +1,7 @@
 module.exports = {
     //Refer https://eslint.org/docs/user-guide/configuring#specifying-parser-options
     "parserOptions": {
-        "ecmaVersion": 6,
+        "ecmaVersion": 8,
         "sourceType": "module",
         "ecmaFeatures": {
             "jsx": true

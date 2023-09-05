@@ -6,27 +6,21 @@ class CBM {
 		this.col = 0;
 		this.screen = {};
 		this.memory = {};
-		this.cbmCharList = [];
+		this.charList = [];
 		
 		$.get('/cbm/petscii.csv', {cbm: this}, function(data) {
-			cbm.cbmCharList = Papa.parse(data, { header: true }).data;
-			cbm.cbmScreen();
+			cbm.charList = Papa.parse(data, { header: true }).data;
+			cbm.buildScreen();
 			if(callback) { callback(); }
 		});
 	}
-	
-	cbmSetThis(cbm) {
-		this.row = cbm.row;
-		this.col = cbm.col;
-		this.screen = cbm.screen;
+
+	rnd(seed) { 
+		var rnd = Math.random() * seed; 
+		return rnd; 
 	}
 
-	cbmRND(seed) { 
-		var rnd = Math.floor(Math.random() * seed) + 1; 
-		return parseInt(rnd); 
-	}
-
-	cbmPeek(mem) {
+	peek(mem) {
 		var cbm = this;
 		var id = cbm.memory[mem].id;
 		var cell = cbm.screen[id].poke;
@@ -34,12 +28,12 @@ class CBM {
 		return cell;
 	}
 
-	cbmPoke(mem, poke) {
+	poke(mem, poke) {
 		// get poke character
 		var cell = 'bad';
 		var rev = 'N';
 		var cbm = this;
-		cbm.cbmCharList.forEach(function(item) {
+		cbm.charList.forEach(function(item) {
 			if(item.Poke == poke) { 
 				cell = item.Vice;
 				rev = item.Rev;
@@ -55,17 +49,34 @@ class CBM {
 			cbm.col = cbm.memory[mem].col;
 
 			// display character
-			cbm.cbmDisplayCell(cell, rev);
+			cbm.displayCell(cell, rev);
 			cbm.col = col;
 			cbm.row = row;
 		}
 	}
 
-	cbmSound() {
+	sound() {
 
 	}
-
-	cbmDisplay(value) {
+	
+	print(value) {
+		var cbm = this;
+		cbm.display(value);
+		cbm.col = 0;
+		cbm.row = cbm.row + 1;
+		if(cbm.row > 24) { cbm.row = 24; }
+	}
+	
+	printLoop(value, loop) {
+		for(var l=0; l<loop; l++) {
+			this.display(value);
+			cbm.col = 0;
+			cbm.row = cbm.row + 1;
+			if(cbm.row > 24) { cbm.row = 24; }
+		}
+	}
+	
+	display(value) {
 		var isCode = false;
 		var cell = '';
 		var rev = 'N';
@@ -81,23 +92,31 @@ class CBM {
 			// process cell
 			if(isCode == false) {
 				if(cell == '{home}') { cbm.row = 0; cbm.col = 0; }
-				else if(cell == '{left}') { cbm.col = cbm.col - 1; if(cbm.col < 0) { cbm.col = 0;} }
+				else if(cell == '{left}') { cbm.col = cbm.col - 1; if(cbm.col < 0) {cbm.col = 0;} }
 				else if(cell == '{rght}') { cbm.col = cbm.col + 1; }
-				else if(cell == '{down}') { cbm.row = cbm.row + 1; cbm.col = 0; }
-				else if(cell == '{up}') { cbm.row = cbm.row - 1; cbm.col = 0; if(cbm.row < 0) { cbm.row = 0;} }
+				else if(cell == '{down}') { cbm.row = cbm.row + 1; cbm.col = 0; if(cbm.row > 24) {cbm.row = 24;} }
+				else if(cell == '{up}') { cbm.row = cbm.row - 1; cbm.col = 0; if(cbm.row < 0) {cbm.row = 0;} }
 				else if(cell == '{rvon}') { rev = 'R'; }
-				else if(cell == '{rvof}') { rev = 'N'; }
-				else if(cell == '{clr}') { cbm.cbmScreen(); }
-				else { cbm.cbmDisplayCell(cell, rev); }
+				else if(cell == '{rvof}') { 
+					rev = 'N'; 
+				}
+				else if(cell == '{clr}') { cbm.buildScreen(); }
+				else { cbm.displayCell(cell, rev); }
 			}
 		});
 	}
 	
-	cbmDisplayCell(cell, rev) {
-		var id = this.cbmSetID();
+	displayLoop(value, loop) {
+		for(var l=0; l<loop; l++) {
+			this.display(value);
+		}
+	}
+	
+	displayCell(cell, rev) {
+		var id = this.setID();
 		var cbm = this;
 		
-		this.cbmCharList.forEach(function(charRow) {
+		this.charList.forEach(function(charRow) {
 			if(cell == charRow.Vice) {
 				// set cell
 				cbm.screen[id].char = charRow.Hex;
@@ -108,7 +127,7 @@ class CBM {
 				var charRev = charRow.Rev;
 				if(rev == 'R' && charRev == 'N') { charRev = 'R'; }
 				else if(rev == 'R' && charRev == 'R') { charRev = 'N'; }
-				if(cbm.screen[id].rev != charRev) { cbm.cbmReverse(charRev); }
+				cbm.reverse(charRev);
 				
 				// display cell
 				$('#' + id).html('&#x0e0' + cbm.screen[id].char);
@@ -118,8 +137,8 @@ class CBM {
 		});
 	}
 
-	cbmReverse(rev) {
-		var id = this.cbmSetID();
+	reverse(rev) {
+		var id = this.setID();
 		
 		if(rev == 'R') {
 			$('#' + id).removeClass('bgnormal');
@@ -134,11 +153,11 @@ class CBM {
 		}
 	}
 	
-	cbmTab(value) {
+	tab(value) {
 		this.col = value;
 	}
 
-	cbmScreen() {
+	buildScreen() {
 		this.screen = {};
 		this.memory = {};
 		var cbm = this;
@@ -148,7 +167,7 @@ class CBM {
 		for(cbm.row=0; cbm.row<26; cbm.row++) {
 			html += '<tr id="R' + this.row + '">';
 			for(cbm.col=0; cbm.col<40; cbm.col++) {
-				var id = cbm.cbmSetID();
+				var id = cbm.setID();
 				var cell = { char: '20', poke: 32 , rev: 'N', mem: memVal };
 				var mem = { row: cbm.row, col: cbm.col, id: id };
 				cbm.screen[id] = cell;
@@ -166,7 +185,7 @@ class CBM {
 		this.col = 0;
 	}
 	
-	cbmInput(callback) {
+	getInput(callback) {
 		var allow = [8, 13, 186, 157, 188, 189, 190, 191, 219, 220, 221, 222];
 		var cbm = this;
 		var inputLoc = cbm.col;
@@ -178,25 +197,30 @@ class CBM {
 			var key = event.key;
 			var code = event.which;
 
-			if(allow.includes(event.which)) { 
-				if(event.key == 'Enter') {
-					$(document).off('keypress');
+			if(allow.includes(code)) { 
+				if(key == 'Enter') {
+					$(document).off('keydown');
 					callback(input);
-				} else if(event.key == 'Backspace') {
+				} else if(key == 'Backspace') {
 					input = input.substring(0, input.length - 1);
 					cbm.col = inputLoc;
-					cbm.cbmDisplay(input);
+					cbm.display(input);
 				} else {
+					input += key;
 					cbm.col = inputLoc;
-					cbm.cbmDisplay(input);
+					cbm.display(input);
 				}
 			}
 		});
 	}
 	
-	cbmSetID() {
+	setID() {
 		var id = 'R' + this.row + 'C' + this.col;
 		return id;
+	}
+
+	sleep(ms) {
+		return new Promise(resolve => setTimeout(resolve, ms));
 	}
 
 }
